@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staking dApp</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Staking dApp</h1>
+        <button id="connectWalletButton" onclick="connectWallet()">Connect Wallet</button>
+
+        <div id="walletInfo" class="wallet-info">
+            <h3>Wallet Connected</h3>
+            <p id="walletAddress"></p>
+            <p>Balance: <span id="balance"></span> ETH</p>
+        </div>
+
+        <div id="stakingSection" class="staking-section">
+            <h3>Stake Token</h3>
+            <input type="number" id="stakeAmount" placeholder="Amount to Stake">
+            <button onclick="stakeTokens()">Stake</button>
+
+            <h3>Unstake Token</h3>
+            <input type="number" id="unstakeAmount" placeholder="Amount to Unstake">
+            <button onclick="unstakeTokens()">Unstake</button>
+
+            <h3>Claim Rewards</h3>
+            <button onclick="claimRewards()">Claim Rewards</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
