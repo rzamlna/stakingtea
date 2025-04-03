@@ -1,33 +1,44 @@
 body {
+    background-color: #28a745; /* Warna Hijau */
+    color: white; /* Warna Teks Putih */
     font-family: Arial, sans-serif;
-    background-color: #ffffff;
-    color: #333;
     margin: 0;
     padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
     text-align: center;
 }
 
-h1 {
-    color: green;
+.container {
+    background-color: rgba(0, 0, 0, 0.7); /* Sedikit transparan hitam untuk kontras dengan teks putih */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    width: 80%;
+    max-width: 500px;
 }
 
 button {
-    background-color: green;
+    background-color: #006400; /* Hijau lebih gelap */
     color: white;
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: darkgreen;
+    background-color: #004d00; /* Warna hijau gelap saat hover */
 }
 
-.container {
-    padding: 20px;
-}
-
-.wallet-info, .staking-section {
-    display: none;
+input[type="number"] {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%;
 }
