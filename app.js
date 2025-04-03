@@ -3,8 +3,7 @@ let userAddress;
 let stakingContract;
 
 const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // Ganti dengan RPC TEA yang valid
-const stakingTokenAddress = "0x7Eaa8557E1A608bcc77C2d392093cE7F05c0DB14";  // Token Staking (Namun ini tidak digunakan untuk approve)
-const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Kontrak Staking
+const stakingContractAddress = "0xa301386393a9c87Bf9d8E022cD3da292C40c9680";  // Kontrak Staking
 const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Alamat penerima ETH
 
 const stakingABI = [
@@ -117,22 +116,24 @@ async function unstakeTokens() {
     const amountWei = web3.utils.toWei(amount, "ether");  // Konversi ke Wei
 
     try {
+        // Cek apakah jumlah unstake lebih besar dari 0
+        if (parseFloat(amount) <= 0) {
+            alert("Jumlah unstake harus lebih dari 0.");
+            return;
+        }
+
+        const stakedAmount = await stakingContract.methods.balances(userAddress).call();
+        if (parseFloat(amountWei) > parseFloat(stakedAmount)) {
+            alert("Jumlah unstake melebihi jumlah yang sudah distake.");
+            return;
+        }
+
+        // Lakukan unstake
         await stakingContract.methods.unstake(amountWei).send({ from: userAddress });
         alert("Unstake berhasil!");
     } catch (error) {
         console.error("Unstake gagal:", error);
         alert("Unstake gagal. Periksa transaksi Anda.");
-    }
-}
-
-// Fungsi Klaim Rewards
-async function claimRewards() {
-    try {
-        await stakingContract.methods.claimRewards().send({ from: userAddress });
-        alert("Rewards berhasil diklaim!");
-    } catch (error) {
-        console.error("Claim gagal:", error);
-        alert("Claim gagal. Periksa transaksi Anda.");
     }
 }
 
