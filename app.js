@@ -2,7 +2,7 @@ let web3;
 let userAddress;
 let stakingContract;
 
-const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public"; // Ganti dengan RPC TEA yang valid
+const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // Ganti dengan RPC TEA yang valid
 const stakingTokenAddress = "0x7Eaa8557E1A608bcc77C2d392093cE7F05c0DB14";  // Token Staking
 const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Kontrak Staking
 const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Alamat penerima ETH
@@ -71,7 +71,7 @@ async function connectWallet() {
 // Tampilkan saldo ETH
 async function displayBalance() {
     const balance = await web3.eth.getBalance(userAddress);
-    const balanceInETH = web3.utils.fromWei(balance, "ether");  
+    const balanceInETH = web3.utils.fromWei(balance, "TEA");  
     document.getElementById("balance").innerText = balanceInETH;
 }
 
