@@ -2,10 +2,10 @@ let web3;
 let userAddress;
 let stakingContract;
 
-const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // Ganti dengan RPC TEA yang valid
+const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // RPC for TEA network
 const stakingTokenAddress = "0x7Eaa8557E1A608bcc77C2d392093cE7F05c0DB14";  // Token Staking
-const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Kontrak Staking
-const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Alamat penerima ETH
+const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Staking Contract
+const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Recipient address
 
 const stakingABI = [
     {
@@ -51,7 +51,7 @@ const stakingABI = [
 // Koneksi Wallet
 async function connectWallet() {
     if (window.ethereum) {
-        web3 = new Web3(window.ethereum);
+        web3 = new Web3(new Web3.providers.HttpProvider(TEA_RPC_URL)); // Connect to the TEA RPC URL
         await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = (await web3.eth.getAccounts())[0];
 
@@ -71,7 +71,7 @@ async function connectWallet() {
 // Tampilkan saldo ETH
 async function displayBalance() {
     const balance = await web3.eth.getBalance(userAddress);
-    const balanceInETH = web3.utils.fromWei(balance, "TEA");  
+    const balanceInETH = web3.utils.fromWei(balance, "ether");  // Corrected to use 'ether' unit
     document.getElementById("balance").innerText = balanceInETH;
 }
 
@@ -126,17 +126,6 @@ async function unstakeTokens() {
     } catch (error) {
         console.error("Unstake gagal:", error);
         alert("Unstake gagal. Periksa transaksi Anda.");
-    }
-}
-
-// Fungsi Klaim Rewards
-async function claimRewards() {
-    try {
-        await stakingContract.methods.claimRewards().send({ from: userAddress });
-        alert("Rewards berhasil diklaim!");
-    } catch (error) {
-        console.error("Claim gagal:", error);
-        alert("Claim gagal. Periksa transaksi Anda.");
     }
 }
 
