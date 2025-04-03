@@ -3,7 +3,7 @@ let userAddress;
 let stakingContract;
 
 const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // Ganti dengan RPC TEA yang valid
-const stakingTokenAddress = "0x7Eaa8557E1A608bcc77C2d392093cE7F05c0DB14";  // Token Staking
+const stakingTokenAddress = "0x7Eaa8557E1A608bcc77C2d392093cE7F05c0DB14";  // Token Staking (Namun ini tidak digunakan untuk approve)
 const stakingContractAddress = "0x419C709ce36551362eF76487Bb25390e95838513";  // Kontrak Staking
 const recipientAddress = "0x4870cF0d63aF7d96Fb3c13FC6cE519646C2038C1";  // Alamat penerima ETH
 
@@ -14,7 +14,7 @@ const stakingABI = [
         ],
         "name": "stake",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable", // Mengubah stateMutability menjadi payable untuk menerima ETH/TEA
         "type": "function"
     },
     {
@@ -27,12 +27,12 @@ const stakingABI = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "stakingToken",
+        "inputs": [], 
+        "name": "stakingToken", 
         "outputs": [
             { "internalType": "contract IERC20", "name": "", "type": "address" }
         ],
-        "stateMutability": "view",
+        "stateMutability": "view", 
         "type": "function"
     },
     {
@@ -43,7 +43,7 @@ const stakingABI = [
         "outputs": [
             { "internalType": "uint256", "name": "", "type": "uint256" }
         ],
-        "stateMutability": "view",
+        "stateMutability": "view", 
         "type": "function"
     }
 ];
@@ -86,40 +86,24 @@ async function stakeTokens() {
     const amount = document.getElementById("stakeAmount").value;
     const amountWei = web3.utils.toWei(amount, "ether");  // Konversi ke Wei
 
-    const stakingToken = new web3.eth.Contract([
-        {
-            "constant": false,
-            "inputs": [
-                { "name": "spender", "type": "address" },
-                { "name": "amount", "type": "uint256" }
-            ],
-            "name": "approve",
-            "outputs": [],
-            "payable": false,
-            "stateMutability": "nonpayable",
-            "type": "function"
-        }
-    ], stakingTokenAddress);
-
     try {
-        // Persetujuan token untuk staking
-        const approval = await stakingToken.methods.approve(stakingContractAddress, amountWei).send({ from: userAddress });
-        
-        // Cek apakah persetujuan berhasil
-        if (approval.status) {
-            console.log("Persetujuan token berhasil! Transaksi Hash:", approval.transactionHash);
-            
-            // Setelah persetujuan berhasil, lakukan staking
-            const staking = await stakingContract.methods.stake(amountWei).send({ from: userAddress });
-            
-            // Cek status staking
-            if (staking.status) {
-                alert("Stake berhasil!");
-            } else {
-                alert("Stake gagal. Periksa transaksi Anda.");
-            }
+        // Pastikan jumlah yang akan disetorkan lebih besar dari 0
+        if (parseFloat(amount) <= 0) {
+            alert("Jumlah stake harus lebih dari 0.");
+            return;
+        }
+
+        // Lakukan staking langsung dengan mentransfer ETH ke kontrak staking
+        const staking = await stakingContract.methods.stake(amountWei).send({
+            from: userAddress,
+            value: amountWei  // Mengirim ETH sebagai value
+        });
+
+        // Cek status staking
+        if (staking.status) {
+            alert("Stake berhasil!");
         } else {
-            alert("Persetujuan token gagal.");
+            alert("Stake gagal. Periksa transaksi Anda.");
         }
     } catch (error) {
         console.error("Staking gagal:", error);
