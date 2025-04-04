@@ -199,7 +199,7 @@ async function updatePendingReward() {
     try {
         const pending = await stakingContract.methods.getPendingReward(userAddress).call();
         const formatted = web3.utils.fromWei(pending, "ether");
-        document.getElementById("pendingReward").innerText = `${formatted} TOKEN`;
+        document.getElementById("pendingReward").innerText = `${formatted} WTEA`;
     } catch (error) {
         console.error("Gagal ambil pending reward:", error);
         document.getElementById("pendingReward").innerText = `Error`;
