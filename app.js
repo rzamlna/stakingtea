@@ -3,7 +3,7 @@ let userAddress;
 let stakingContract;
 
 const TEA_RPC_URL = "https://tea-sepolia.g.alchemy.com/public/"; // Ganti dengan RPC TEA yang valid
-const stakingContractAddress = "0xa301386393a9c87Bf9d8E022cD3da292C40c9680";  // Alamat kontrak staking
+const stakingContractAddress = "0xC6A0E9F4dC42DDDea9C4B4a25ac82a14B7B08D32";  // Alamat kontrak staking
 
 const stakingABI = [
     {
