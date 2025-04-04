@@ -177,18 +177,18 @@ async function unstakeTokens() {
 }
 
 // Fungsi Claim Reward
-async function claimReward() {
+async function claimRewards() {
     try {
         const tx = await stakingContract.methods.claimReward().send({ from: userAddress });
         if (tx.status) {
             alert("Reward berhasil diklaim!");
-            simulateReward();
+            updatePendingReward(); // refresh nilai reward
         } else {
-            alert("Gagal klaim reward.");
+            alert("Klaim reward gagal.");
         }
     } catch (error) {
-        console.error("Claim error:", error);
-        alert("Gagal klaim reward.");
+        console.error("Klaim reward error:", error);
+        alert("Klaim reward gagal.");
     }
 }
 
