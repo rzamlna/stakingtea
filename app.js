@@ -172,7 +172,7 @@ function updateCountdown() {
     setTimeout(updateCountdown, 1000); // update setiap detik
     }
 
-window.onload = () => {
-    updateCountdown(); // mulai saat halaman dimuat
+    window.onload = () => {
+        updateCountdown(); // mulai saat halaman dimuat
     }
 }
