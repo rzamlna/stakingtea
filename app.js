@@ -7,7 +7,7 @@ const stakingContractAddress = "0x4F580f84A3079247A5fC8c874BeA651654313dc6";
 
 const stakingABI = [
     {
-        "inputs": [],
+        "inputs": [], 
         "stateMutability": "nonpayable",
         "type": "constructor"
     },
@@ -25,15 +25,6 @@ const stakingABI = [
             { "internalType": "address", "name": "user", "type": "address" }
         ],
         "name": "getStakedAmount",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            { "internalType": "address", "name": "user", "type": "address" }
-        ],
-        "name": "getReward",
         "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
         "stateMutability": "view",
         "type": "function"
@@ -79,113 +70,141 @@ const stakingABI = [
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
+    },
+    {
+        "inputs": [
+            { "internalType": "address", "name": "user", "type": "address" }
+        ],
+        "name": "getReward",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "claimReward",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
     }
 ];
 
+// Koneksi Wallet
 async function connectWallet() {
     if (window.ethereum) {
         web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
         userAddress = (await web3.eth.getAccounts())[0];
-
+        
         document.getElementById("connectWalletButton").style.display = 'none';
         document.getElementById("walletInfo").style.display = 'block';
         document.getElementById("walletAddress").innerText = `Address: ${userAddress}`;
 
         displayBalance();
         initStaking();
-        simulateReward();
     } else {
         alert("Please install Metamask!");
     }
 }
 
+// Tampilkan saldo ETH
 async function displayBalance() {
     const balance = await web3.eth.getBalance(userAddress);
     const balanceInETH = web3.utils.fromWei(balance, "ether");
     document.getElementById("balance").innerText = balanceInETH;
 }
 
+// Inisialisasi Staking
 async function initStaking() {
     stakingContract = new web3.eth.Contract(stakingABI, stakingContractAddress);
     document.getElementById("stakingSection").style.display = 'block';
+
+    simulateReward();
 }
 
+// Fungsi Stake
 async function stakeTokens() {
     const amount = document.getElementById("stakeAmount").value;
     const amountWei = web3.utils.toWei(amount, "ether");
 
-    try {
-        if (parseFloat(amount) <= 0) {
-            alert("Jumlah stake harus lebih dari 0.");
-            return;
-        }
+    if (parseFloat(amount) <= 0) {
+        alert("Jumlah stake harus lebih dari 0.");
+        return;
+    }
 
-        const staking = await stakingContract.methods.stake().send({
+    try {
+        const tx = await stakingContract.methods.stake().send({
             from: userAddress,
             value: amountWei
         });
 
-        if (staking.status) {
+        if (tx.status) {
             alert("Stake berhasil!");
+            simulateReward();
         } else {
-            alert("Stake gagal. Periksa transaksi Anda.");
+            alert("Stake gagal.");
         }
-
-        simulateReward();
-        displayBalance();
     } catch (error) {
-        console.error("Staking gagal:", error);
-        alert("Staking gagal. Periksa transaksi Anda.");
+        console.error("Staking error:", error);
+        alert("Gagal melakukan stake.");
     }
 }
 
+// Fungsi Unstake
 async function unstakeTokens() {
     const amount = document.getElementById("unstakeAmount").value;
     const amountWei = web3.utils.toWei(amount, "ether");
 
-    try {
-        if (parseFloat(amount) <= 0) {
-            alert("Jumlah unstake harus lebih dari 0.");
-            return;
-        }
+    if (parseFloat(amount) <= 0) {
+        alert("Jumlah unstake harus lebih dari 0.");
+        return;
+    }
 
+    try {
         const stakedAmount = await stakingContract.methods.stakes(userAddress).call();
         if (parseFloat(amountWei) > parseFloat(stakedAmount)) {
-            alert("Jumlah unstake melebihi jumlah yang sudah distake.");
+            alert("Jumlah unstake melebihi jumlah stake.");
             return;
         }
 
         await stakingContract.methods.unstake(amountWei).send({ from: userAddress });
         alert("Unstake berhasil!");
-
         simulateReward();
-        displayBalance();
     } catch (error) {
-        console.error("Unstake gagal:", error);
-        alert("Unstake gagal. Periksa transaksi Anda.");
+        console.error("Unstake error:", error);
+        alert("Gagal melakukan unstake.");
     }
 }
 
-async function claimRewards() {
+// Fungsi Claim Reward
+async function claimReward() {
     try {
-        await stakingContract.methods.withdraw().send({ from: userAddress });
-        alert("Reward berhasil diklaim!");
-
-        simulateReward();
-        displayBalance();
+        const tx = await stakingContract.methods.claimReward().send({ from: userAddress });
+        if (tx.status) {
+            alert("Reward berhasil diklaim!");
+            simulateReward();
+        } else {
+            alert("Gagal klaim reward.");
+        }
     } catch (error) {
-        console.error("Gagal klaim reward:", error);
-        alert("Klaim reward gagal.");
+        console.error("Claim error:", error);
+        alert("Gagal klaim reward.");
     }
 }
 
-// Ambil reward asli dari kontrak
+// Tampilkan Reward Sementara
 async function simulateReward() {
     if (!stakingContract || !userAddress) return;
 
     try {
-        const rewardWei = await stakingContract.methods.getReward(userAddress).call();
+        let rewardWei;
+
+        try {
+            rewardWei = await stakingContract.methods.getReward(userAddress).call();
+        } catch {
+            rewardWei = await stakingContract.methods.getReward().call({ from: userAddress });
+        }
+
         const reward = web3.utils.fromWei(rewardWei, "ether");
         document.getElementById("pendingReward").innerText = parseFloat(reward).toFixed(4);
     } catch (error) {
