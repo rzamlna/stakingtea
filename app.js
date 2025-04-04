@@ -193,22 +193,15 @@ async function claimReward() {
 }
 
 // Tampilkan Reward Sementara
-async function simulateReward() {
+async function updatePendingReward() {
     if (!stakingContract || !userAddress) return;
 
     try {
-        let rewardWei;
-
-        try {
-            rewardWei = await stakingContract.methods.getReward(userAddress).call();
-        } catch {
-            rewardWei = await stakingContract.methods.getReward().call({ from: userAddress });
-        }
-
-        const reward = web3.utils.fromWei(rewardWei, "ether");
-        document.getElementById("pendingReward").innerText = parseFloat(reward).toFixed(4);
+        const pending = await stakingContract.methods.getPendingReward(userAddress).call();
+        const formatted = web3.utils.fromWei(pending, "ether");
+        document.getElementById("pendingReward").innerText = `${formatted} TOKEN`;
     } catch (error) {
-        console.error("Gagal ambil reward:", error);
-        document.getElementById("pendingReward").innerText = "Error";
+        console.error("Gagal ambil pending reward:", error);
+        document.getElementById("pendingReward").innerText = `Error`;
     }
 }
