@@ -153,26 +153,3 @@ async function checkBalanceAndStake() {
         stakeTokens();  // Lanjutkan staking jika saldo cukup
     }
 }
-
-function updateCountdown() {
-    const now = new Date();
-    const nextReset = new Date();
-
-    // Set jam reset ke 00:00 UTC
-    nextReset.setUTCHours(24, 0, 0, 0); // tengah malam UTC berikutnya
-
-    const diff = nextReset - now;
-
-    const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
-    const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
-    const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
-
-    document.getElementById("timer").innerText = `${hours}:${minutes}:${seconds}`;
-
-    setTimeout(updateCountdown, 1000); // update setiap detik
-    }
-
-    window.onload = () => {
-        updateCountdown(); // mulai saat halaman dimuat
-    }
-}
